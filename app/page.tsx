@@ -17,7 +17,7 @@ type ClipResult = {
 export default function Home() {
   const [transcript, setTranscript] = useState("");
   const [contentType, setContentType] = useState("Reaction");
-  const [result, setResult] = useState<ClipResult | null>(null);
+  const [results, setResults] = useState<ClipResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -30,7 +30,7 @@ export default function Home() {
     try {
       setIsLoading(true);
       setErrorMessage("");
-      setResult(null);
+      setResults([]);
 
       const response = await fetch("/api/analyze", {
         method: "POST",
@@ -49,7 +49,13 @@ export default function Home() {
         throw new Error(data.error || "Analysis failed.");
       }
 
-      setResult(data.result);
+      if (Array.isArray(data.result)) {
+  setResults(data.result);
+} else if (data.result && typeof data.result === "object") {
+  setResults([data.result]);
+} else {
+  throw new Error("StudioClip did not return a valid clip.");
+}
     } catch (error) {
       setErrorMessage(
         error instanceof Error
@@ -74,8 +80,8 @@ export default function Home() {
           </h1>
 
           <p className="mx-auto mt-5 max-w-2xl text-lg text-zinc-400">
-            Paste a transcript and StudioClip will identify strong moments,
-            hooks, captions, thumbnail text, and editing ideas.
+            Paste a transcript and receive up to five strong clip ideas,
+            complete with hooks, captions, thumbnail text, and editing notes.
           </p>
         </header>
 
@@ -109,7 +115,7 @@ export default function Home() {
             disabled={isLoading}
             className="mt-6 rounded-xl bg-violet-600 px-6 py-3 font-bold transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isLoading ? "Analyzing..." : "Analyze Transcript"}
+            {isLoading ? "Finding your best clips..." : "Analyze Transcript"}
           </button>
 
           {errorMessage && (
@@ -119,59 +125,91 @@ export default function Home() {
           )}
         </section>
 
-        {result && (
+        {results.length > 0 && (
           <section className="mt-10">
-            <h2 className="mb-5 text-3xl font-bold">StudioClip Results</h2>
+            <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-widest text-violet-400">
+                  Analysis complete
+                </p>
 
-            <article className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-semibold text-violet-400">
-                    {contentType} · Clip 1
-                  </p>
-
-                  <h3 className="mt-1 text-2xl font-bold">{result.title}</h3>
-
-                  <p className="mt-1 text-zinc-400">
-                    {result.startTime}–{result.endTime}
-                  </p>
-                </div>
-
-                <span className="rounded-full bg-violet-950 px-4 py-2 font-bold text-violet-200">
-                  {result.score}/100
-                </span>
+                <h2 className="mt-1 text-3xl font-bold">
+                  StudioClip Results
+                </h2>
               </div>
 
-              <div className="mt-6 space-y-5 text-zinc-300">
-                <ResultItem title="Hook" text={result.hook} />
+              <p className="text-zinc-400">
+                {results.length} clip{results.length === 1 ? "" : "s"} found
+              </p>
+            </div>
 
-                <ResultItem
-                  title="Why it works"
-                  text={result.whyItWorks}
+            <div className="space-y-6">
+              {results.map((result, index) => (
+                <ClipCard
+                  key={`${result.title}-${index}`}
+                  result={result}
+                  index={index}
+                  contentType={contentType}
                 />
-
-                <ResultItem
-                  title="Thumbnail text"
-                  text={result.thumbnailText}
-                />
-
-                <ResultItem title="Caption" text={result.caption} />
-
-                <div>
-                  <h4 className="font-semibold text-white">Editing notes</h4>
-
-                  <ul className="mt-2 list-inside list-disc space-y-1">
-                    {result.editingNotes.map((note, index) => (
-                      <li key={index}>{note}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </article>
+              ))}
+            </div>
           </section>
         )}
       </div>
     </main>
+  );
+}
+
+function ClipCard({
+  result,
+  index,
+  contentType,
+}: {
+  result: ClipResult;
+  index: number;
+  contentType: string;
+}) {
+  return (
+    <article className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold text-violet-400">
+            {contentType} · Clip {index + 1}
+          </p>
+
+          <h3 className="mt-1 text-2xl font-bold">{result.title}</h3>
+
+          <p className="mt-1 text-zinc-400">
+            {result.startTime}–{result.endTime}
+          </p>
+        </div>
+
+        <span className="rounded-full bg-violet-950 px-4 py-2 font-bold text-violet-200">
+          {result.score}/100
+        </span>
+      </div>
+
+      <div className="mt-6 space-y-5 text-zinc-300">
+        <ResultItem title="Hook" text={result.hook} />
+
+        <ResultItem
+          title="Why it works"
+          text={result.whyItWorks}
+        />
+
+        <ResultItem
+          title="Thumbnail text"
+          text={result.thumbnailText}
+        />
+
+        <ResultItem title="Caption" text={result.caption} />
+
+        <ResultItem
+  title="Editing notes"
+  text={result.editingNotes.join("\n\n")}
+/>
+      </div>
+    </article>
   );
 }
 
@@ -182,10 +220,31 @@ function ResultItem({
   title: string;
   text: string;
 }) {
+  const [copied, setCopied] = useState(false);
+  const copyText = async () => {
+  await navigator.clipboard.writeText(text);
+  setCopied(true);
+
+  setTimeout(() => {
+    setCopied(false);
+  }, 2000);
+};
+
   return (
-    <div>
-      <h4 className="font-semibold text-white">{title}</h4>
-      <p className="mt-1">{text}</p>
+    <div className="rounded-xl border border-zinc-800 p-4">
+      <div className="mb-2 flex items-center justify-between">
+        <h4 className="font-semibold text-white">{title}</h4>
+
+        <button
+          onClick={copyText}
+          className="rounded-lg bg-violet-600 px-3 py-1 text-sm font-semibold hover:bg-violet-500"
+        >
+          {copied ? "✅ Copied!" : "📋 Copy"}
+        </button>
+      </div>
+
+      <p>{text}</p>
     </div>
   );
 }
+ 
