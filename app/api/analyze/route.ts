@@ -48,15 +48,39 @@ Return only valid JSON using this exact structure:
   "endTime": "string",
   "score": 90,
   "hook": "string",
-  "whyItWorks": "string",
+  "strengths": [
+    "string"
+  ],
+  "improvements": [
+    "string"
+  ],
+  "coachingInsight": "string",
   "thumbnailText": "string",
   "caption": "string",
-  "editingNotes": ["string", "string", "string"]
+  "editingNotes": [
+    "string",
+    "string",
+    "string"
+  ]
 }
       `,
       input: `
 Content type: ${contentType}
+For "strengths":
+- Return 3 to 5 short bullet-style strengths.
+- Focus on qualities like emotion, hook, clarity, payoff, humor, surprise, or discussion potential.
+- Do NOT claim the clip will go viral.
 
+For "improvements":
+- Return 1 to 3 constructive suggestions.
+- Focus on trimming, pacing, framing, captions, or ending the clip at a stronger point.
+- If the clip is already excellent, suggest only small refinements.
+
+For "coachingInsight":
+- Write 2 to 3 sentences.
+- Explain what the creator can learn from this moment.
+- Be encouraging, specific, and honest.
+- Never promise views or virality.
 Transcript:
 
 ${transcript}
@@ -70,7 +94,7 @@ ${transcript}
       .replace(/\s*```$/i, "");
 
     const result = JSON.parse(cleanedText);
-
+console.log(result);
     return Response.json({ result });
   } catch (error) {
     console.error("StudioClip analysis error:", error);

@@ -8,7 +8,11 @@ type ClipResult = {
   endTime: string;
   score: number;
   hook: string;
-  whyItWorks: string;
+
+  strengths: string[];
+  improvements: string[];
+  coachingInsight: string;
+
   thumbnailText: string;
   caption: string;
   editingNotes: string[];
@@ -192,10 +196,23 @@ function ClipCard({
       <div className="mt-6 space-y-5 text-zinc-300">
         <ResultItem title="Hook" text={result.hook} />
 
-        <ResultItem
-          title="Why it works"
-          text={result.whyItWorks}
-        />
+<ResultItem
+  title="Strengths"
+  text={result.strengths.join("\n\n")}
+  tone="strength"
+/>
+
+<ResultItem
+  title="Improvements"
+  text={result.improvements.join("\n\n")}
+  tone="improvement"
+/>
+
+<ResultItem
+  title="Coaching insight"
+  text={result.coachingInsight}
+  tone="coaching"
+/>
 
         <ResultItem
           title="Thumbnail text"
@@ -216,24 +233,46 @@ function ClipCard({
 function ResultItem({
   title,
   text,
+  tone = "default",
 }: {
   title: string;
   text: string;
+  tone?: "default" | "strength" | "improvement" | "coaching";
 }) {
   const [copied, setCopied] = useState(false);
+
   const copyText = async () => {
   await navigator.clipboard.writeText(text);
   setCopied(true);
 
   setTimeout(() => {
     setCopied(false);
-  }, 2000);
+  }, 1500);
 };
 
+  const toneStyles = {
+    default: "border-zinc-800",
+    strength: "border-emerald-800 bg-emerald-950/20",
+    improvement: "border-amber-800 bg-amber-950/20",
+    coaching: "border-violet-800 bg-violet-950/20",
+  };
+
+  const toneIcons = {
+    default: "",
+    strength: "✓ ",
+    improvement: "↗ ",
+    coaching: "🧠 ",
+  };
+
+  
+
   return (
-    <div className="rounded-xl border border-zinc-800 p-4">
+    <div className={`rounded-xl border p-4 ${toneStyles[tone]}`}>
       <div className="mb-2 flex items-center justify-between">
-        <h4 className="font-semibold text-white">{title}</h4>
+        <h4 className="font-semibold text-white">
+  {toneIcons[tone]}
+  {title}
+</h4>
 
         <button
           onClick={copyText}
@@ -243,7 +282,9 @@ function ResultItem({
         </button>
       </div>
 
-      <p>{text}</p>
+      <p className="whitespace-pre-line text-zinc-300">
+  {text}
+</p>
     </div>
   );
 }
