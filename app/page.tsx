@@ -21,6 +21,7 @@ type ClipResult = {
 export default function Home() {
   const [transcript, setTranscript] = useState("");
   const [contentType, setContentType] = useState("Reaction");
+  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [results, setResults] = useState<ClipResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -106,7 +107,27 @@ export default function Home() {
           <label className="mb-2 block font-semibold">
             Timestamped transcript
           </label>
+<input
+  type="file"
+  accept="video/mp4,video/quicktime,video/webm"
+  onChange={(event) => {
+    const file = event.target.files?.[0] ?? null;
+    setVideoFile(file);
+  }}
+/>
 
+<p className="mt-2 text-sm text-zinc-400">
+  {videoFile ? (
+    <>
+      Selected:{" "}
+      <span className="font-semibold text-white">
+        {videoFile.name}
+      </span>
+    </>
+  ) : (
+    "No video selected yet"
+  )}
+</p>
           <textarea
             value={transcript}
             onChange={(event) => setTranscript(event.target.value)}
