@@ -25,8 +25,26 @@ export default function Home() {
   const [results, setResults] = useState<ClipResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-function handleTranscribeVideo() {
-  console.log("Transcribe clicked", videoFile);
+async function handleTranscribeVideo() {
+  if (!videoFile) {
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", videoFile);
+
+  const response = await fetch("/api/transcribe", {
+    method: "POST",
+    body: formData,
+  });
+
+  const data = await response.json();
+
+console.log("Transcribe response:", data);
+
+if (data.transcript) {
+  setTranscript(data.transcript);
+}
 }
   async function analyzeTranscript() {
     if (transcript.trim().length < 50) {
@@ -136,11 +154,12 @@ function handleTranscribeVideo() {
 </p>
 <button
   type="button"
+  onClick={handleTranscribeVideo}
   className="mt-3 rounded-xl bg-violet-600 px-4 py-2 font-semibold text-white hover:bg-violet-500"
 >
   Transcribe Video
 </button>
-onClick={handleTranscribeVideo}
+
     </>
   ) : (
     <p>No video selected yet</p>
