@@ -25,7 +25,9 @@ export default function Home() {
   const [results, setResults] = useState<ClipResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-
+function handleTranscribeVideo() {
+  console.log("Transcribe clicked", videoFile);
+}
   async function analyzeTranscript() {
     if (transcript.trim().length < 50) {
       setErrorMessage("Please paste a longer transcript first.");
@@ -116,18 +118,34 @@ export default function Home() {
   }}
 />
 
-<p className="mt-2 text-sm text-zinc-400">
+<div className="mt-2 text-sm text-zinc-400">
   {videoFile ? (
     <>
-      Selected:{" "}
-      <span className="font-semibold text-white">
-        {videoFile.name}
-      </span>
+      <p>
+        Selected:{" "}
+        <span className="font-semibold text-white">
+          {videoFile.name}
+        </span>
+      </p>
+
+      <p className="mt-1">
+        File size: {(videoFile.size / 1024 / 1024).toFixed(2)} MB
+      </p>
+      <p className="mt-1 font-semibold text-emerald-400">
+  ✓ Ready to transcribe
+</p>
+<button
+  type="button"
+  className="mt-3 rounded-xl bg-violet-600 px-4 py-2 font-semibold text-white hover:bg-violet-500"
+>
+  Transcribe Video
+</button>
+onClick={handleTranscribeVideo}
     </>
   ) : (
-    "No video selected yet"
+    <p>No video selected yet</p>
   )}
-</p>
+</div>
           <textarea
             value={transcript}
             onChange={(event) => setTranscript(event.target.value)}
