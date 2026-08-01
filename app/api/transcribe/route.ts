@@ -121,6 +121,12 @@ const timestampedTranscript =
     )
     .join("\n") ?? transcriptionData.text;
 console.log("Timestamped transcript:", timestampedTranscript);
+await Promise.allSettled([
+  unlink(tempVideoPath),
+  unlink(tempAudioPath),
+]);
+
+console.log("Temporary video and audio deleted.");
     return NextResponse.json({
   message: "Video transcribed!",
   fileName: file.name,
